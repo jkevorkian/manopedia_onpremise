@@ -1,0 +1,15 @@
+   * Refine `TranslationEngine`: The current TranslationEngine is very basic. You'll need to implement more
+     sophisticated logic to interpret the FloatArray output from the TFLite model into meaningful
+     translations, potentially incorporating the sliding window logic for sequence prediction.
+   * UI Enhancements: Improve the user interface to display the translated text clearly and provide user
+     controls (e.g., start/stop translation, switch cameras).
+   * Comprehensive Unit Tests:
+       * `DataPreprocessor`: Write tests to ensure correct landmark extraction, normalization, and sliding
+         window behavior.
+       * `TFLiteModelHandler`: Write tests to verify model loading and inference with sample input data.
+       * `TranslationEngine`: Write tests to ensure accurate interpretation of model outputs into translated
+         text.
+   * Error Handling and Permissions: Implement robust error handling for camera access, model loading, and
+     inference. Handle runtime permissions for the camera.
+   * Performance Optimization: Profile the application to identify and address any performance bottlenecks,
+     especially in the preprocessing and inference steps.
