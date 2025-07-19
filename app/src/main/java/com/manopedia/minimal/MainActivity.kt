@@ -41,6 +41,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
 
@@ -94,10 +102,27 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val context = LocalContext.current
-                    CameraPreviewScreen(this, context)
+                    var isCameraActive by remember { mutableStateOf(false) }
+
+                    if (isCameraActive) {
+                        CameraPreviewScreen(this, LocalContext.current)
+                    } else {
+                        WelcomeScreen(onStartClick = { isCameraActive = true })
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun WelcomeScreen(onStartClick: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(onClick = onStartClick) {
+            Text("Start Translating")
         }
     }
 }
@@ -111,11 +136,12 @@ fun CameraPreviewScreen(lifecycleOwner: LifecycleOwner, context: Context) {
     val previewView = remember { PreviewView(context) }
 
     var translatedText by remember { mutableStateOf("Initializing...") }
+    var isFrontCamera by remember { mutableStateOf(false) }
 
-    DisposableEffect(lifecycleOwner) {
+    DisposableEffect(lifecycleOwner, isFrontCamera) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
-                cameraHandler.startCamera(previewView) { imageProxy ->
+                cameraHandler.startCamera(previewView, isFrontCamera) { imageProxy ->
                     val bitmap = imageProxyToBitmap(imageProxy)
                     bitmap?.let {
                         val preprocessedData = dataPreprocessor.preprocessFrame(it)
@@ -142,15 +168,27 @@ fun CameraPreviewScreen(lifecycleOwner: LifecycleOwner, context: Context) {
         }
     }
 
-    AndroidView(
-        factory = { previewView },
-        modifier = Modifier.fillMaxSize()
-    )
-
-    Text(
-        text = translatedText,
-        modifier = Modifier.fillMaxSize()
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { previewView },
+            modifier = Modifier.fillMaxSize()
+        )
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = translatedText,
+                color = Color.White,
+                fontSize = 24.sp,
+                modifier = Modifier.padding(8.dp)
+            )
+            Button(onClick = { isFrontCamera = !isFrontCamera }) {
+                Text(if (isFrontCamera) "Switch to Back Camera" else "Switch to Front Camera")
+            }
+        }
+    }
 }
 
 @OptIn(androidx.camera.core.ExperimentalGetImage::class)

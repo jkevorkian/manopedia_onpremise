@@ -28,7 +28,7 @@ class DataPreprocessor(private val context: Context, private val modelPath: Stri
     private fun setupHandLandmarker() {
         try {
             val baseOptions = BaseOptions.builder()
-                .setModelAssetPath("hand_landmarker.task")
+                .setModelAssetPath(modelPath)
                 .build()
 
             val options = HandLandmarker.HandLandmarkerOptions.builder()

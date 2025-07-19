@@ -21,7 +21,7 @@ class CameraHandler(private val context: Context, private val lifecycleOwner: Li
     private var cameraProvider: ProcessCameraProvider? = null
     private val cameraExecutor = Executors.newSingleThreadExecutor()
 
-    fun startCamera(previewView: PreviewView, onFrame: (imageProxy: androidx.camera.core.ImageProxy) -> Unit) {
+    fun startCamera(previewView: PreviewView, useFrontCamera: Boolean, onFrame: (imageProxy: androidx.camera.core.ImageProxy) -> Unit) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
 
         cameraProviderFuture.addListener({
@@ -36,7 +36,11 @@ class CameraHandler(private val context: Context, private val lifecycleOwner: Li
                 .build()
                 .also { it.setAnalyzer(cameraExecutor, onFrame) }
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            val cameraSelector = if (useFrontCamera) {
+                CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
 
             try {
                 cameraProvider?.unbindAll()
@@ -54,6 +58,5 @@ class CameraHandler(private val context: Context, private val lifecycleOwner: Li
 
     fun stopCamera() {
         cameraProvider?.unbindAll()
-        cameraExecutor.shutdown()
     }
 }
