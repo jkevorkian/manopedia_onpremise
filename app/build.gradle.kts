@@ -18,6 +18,9 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        ndk {
+            abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a"))
+        }
     }
 
     buildTypes {
@@ -30,14 +33,15 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.10"
@@ -45,7 +49,18 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/licenses/ASM"
+            excludes += "META-INF/licenses/byte-buddy"
+            pickFirsts += "**/*.so" // More generic pickFirsts
         }
+        jniLibs {
+            useLegacyPackaging = true
+            // doNotStrip is deprecated, use keepDebugSymbols instead
+            // keepDebugSymbols += "*/libmediapipe_tasks_vision_jni.so" // This is the correct way for newer AGP
+        }
+        // The doNotStrip property is deprecated. Use jniLibs.keepDebugSymbols instead.
+        // For now, I'll keep it as is, but note this for future refactoring.
+        doNotStrip += "*/libmediapipe_tasks_vision_jni.so"
     }
 }
 
@@ -62,11 +77,13 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
 
     // TensorFlow Lite and MediaPipe dependencies
-    implementation("org.tensorflow:tensorflow-lite:2.17.0") // Core TFLite library
+    implementation("org.tensorflow:tensorflow-lite:2.16.1") // Core TFLite library
     implementation("com.google.mediapipe:tasks-vision:0.10.9") {
         // Exclude tensorflow-lite-api from MediaPipe to avoid conflicts
         exclude(group = "org.tensorflow", module = "tensorflow-lite-api")
     }
+    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.16.1")
+    
 
     // CameraX dependencies
     implementation("androidx.camera:camera-core:1.4.0")

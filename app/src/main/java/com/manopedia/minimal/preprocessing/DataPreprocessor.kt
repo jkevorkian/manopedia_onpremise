@@ -17,9 +17,9 @@ import java.util.LinkedList
 class DataPreprocessor(private val context: Context, private val modelPath: String) {
 
     private var handLandmarker: HandLandmarker? = null
-    // private val windowSize = 30 // Example window size for LSTM input
-    // private val featureSize = 21 * 3 // 21 landmarks, each with x, y, z
-    // private val slidingWindow = LinkedList<FloatArray>()
+    private val windowSize = 30 // Example window size for LSTM input
+    private val featureSize = 21 * 3 // 21 landmarks, each with x, y, z
+    private val slidingWindow = LinkedList<FloatArray>()
 
     init {
         setupHandLandmarker()
@@ -28,7 +28,7 @@ class DataPreprocessor(private val context: Context, private val modelPath: Stri
     private fun setupHandLandmarker() {
         try {
             val baseOptions = BaseOptions.builder()
-                .setModelAssetPath(modelPath)
+                .setModelAssetPath("hand_landmarker.task")
                 .build()
 
             val options = HandLandmarker.HandLandmarkerOptions.builder()
@@ -46,37 +46,46 @@ class DataPreprocessor(private val context: Context, private val modelPath: Stri
         if (handLandmarker == null) return null
 
         val mpImage = com.google.mediapipe.framework.image.BitmapImageBuilder(bitmap).build()
-        val result = handLandmarker?.detect(mpImage) as HandLandmarkerResult?
+        val result: HandLandmarkerResult? = handLandmarker?.detect(mpImage)
 
         result?.landmarks()?.firstOrNull()?.let { landmarks: List<NormalizedLandmark> ->
-            Log.d("DataPreprocessor", "Detected landmarks: ${landmarks.size}")
-            // Temporarily return null, will re-add logic later
+            val features = extractAndNormalizeFeatures(landmarks)
+            slidingWindow.add(features)
+            if (slidingWindow.size > windowSize) {
+                slidingWindow.removeFirst()
+            }
+
+            if (slidingWindow.size == windowSize) {
+                return formatInputForLSTM()
+            }
         }
         return null
     }
 
     private fun extractAndNormalizeFeatures(landmarks: List<NormalizedLandmark>): FloatArray {
-        val features = FloatArray(21 * 3)
+        val features = FloatArray(featureSize)
         landmarks.forEachIndexed { index, landmark ->
             features[index * 3] = landmark.x()
             features[index * 3 + 1] = landmark.y()
             features[index * 3 + 2] = landmark.z()
         }
+        // Basic normalization (e.g., min-max scaling or z-score normalization) can be added here
+        // For now, just returning raw landmarks
         return features
     }
 
-    // private fun formatInputForLSTM(): ByteBuffer {
-    //     val byteBuffer = ByteBuffer.allocateDirect(windowSize * featureSize * 4) // 4 bytes per float
-    //     byteBuffer.order(ByteOrder.nativeOrder())
-    //     val floatBuffer = byteBuffer.asFloatBuffer()
-    //
-    //     slidingWindow.forEach { frameFeatures ->
-    //         floatBuffer.put(frameFeatures)
-    //     }
-    //
-    //     floatBuffer.rewind()
-    //     return byteBuffer
-    // }
+    private fun formatInputForLSTM(): ByteBuffer {
+        val byteBuffer = ByteBuffer.allocateDirect(windowSize * featureSize * 4) // 4 bytes per float
+        byteBuffer.order(ByteOrder.nativeOrder())
+        val floatBuffer = byteBuffer.asFloatBuffer()
+
+        slidingWindow.forEach { frameFeatures ->
+            floatBuffer.put(frameFeatures)
+        }
+
+        floatBuffer.rewind()
+        return byteBuffer
+    }
 
     fun close() {
         handLandmarker?.close()
