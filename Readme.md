@@ -76,6 +76,10 @@ This document provides instructions on how to deploy the Manopedia application l
     flutter run -d <device_id>
     ```
 
+6.  **Login with the credentials email: a and password: a**
+
+    This will create a generic user on "a" on the backend for you to access the app going over the login.
+
 ## Troubleshooting
 
 -   **Backend connection issues:** If the frontend has trouble connecting to the backend, ensure that the `API_URL` in `frontend-mobile/.env.dev` is set to `http://localhost:8080`.
