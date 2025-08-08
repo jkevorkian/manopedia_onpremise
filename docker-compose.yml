@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./manopedia-backend
+      args:
+        - MONGO_DB_CONNECTION_STRING=mongodb://mongo:27017/manopedia
+    ports:
+      - "8080:8080"
+    environment:
+      - MONGO_DB_CONNECTION_STRING=mongodb://mongo:27017/manopedia
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/manopedia
+      - JWT_SECRET=secret
+      - JWT_EXPIRATION_TIME=86400000
+      - apiToken=
+    depends_on:
+      - mongo
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost:8080/manopedia/actuator/health"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 5
+    #  start_period: 30s
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongo:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  mongo-data:
