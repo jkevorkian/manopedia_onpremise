@@ -75,6 +75,11 @@ This document provides instructions on how to deploy the Manopedia application l
     ```bash
     flutter run -d <device_id>
     ```
+    or for more detailed debugging
+    ```bash
+    flutter run --verbose -d <device_id>
+    ```
+
 
 6.  **Login with the credentials email: a and password: a**
 
